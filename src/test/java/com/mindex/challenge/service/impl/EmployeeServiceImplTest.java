@@ -2,9 +2,13 @@ package com.mindex.challenge.service.impl;
 
 import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
+import com.mindex.challenge.exceptions.EmployeeNotFoundException;
 import com.mindex.challenge.service.EmployeeService;
+import org.apache.commons.lang3.ObjectUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -41,6 +46,9 @@ public class EmployeeServiceImplTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
+
+    @Rule
+    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Before
     public void setup() {
@@ -88,7 +96,7 @@ public class EmployeeServiceImplTest {
 
     @Test
     public void testGetReportingStructureZeroReports() {
-        Employee createdEmployee = createEmployee(null, emptyList());
+        Employee createdEmployee = createEmployee(null, null);
         ReportingStructure expectedReportingStructure = new ReportingStructure(createdEmployee, 0);
 
         ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, createdEmployee.getEmployeeId()).getBody();
@@ -140,24 +148,50 @@ public class EmployeeServiceImplTest {
         assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
     }
 
+    @Test
+    public void testGetReportingStructureNotFound() throws EmployeeNotFoundException {
+        String employeeId = UUID.randomUUID().toString();
+        exceptionRule.expect(EmployeeNotFoundException.class);
+        exceptionRule.expectMessage("Invalid employeeId: " + employeeId);
 
+        employeeService.getReportingStructure(employeeId);
+    }
 
+    @Test
+    public void testGetReportingStructureDirectReportNotFound() throws EmployeeNotFoundException {
+        String invalidDirectReport = UUID.randomUUID().toString();
+        exceptionRule.expect(EmployeeNotFoundException.class);
+        exceptionRule.expectMessage("Invalid employeeId: " + invalidDirectReport);
+        Employee employee = createEmployee(null, Collections.singletonList(invalidDirectReport));
+
+        employeeService.getReportingStructure(employee.getEmployeeId());
+    }
+
+    /**
+     * Generates and saves an employee to the database
+     * @param firstName employee first name, helpful for debugging
+     * @param directReports ids of the employee's direct reports
+     * @return an Employee with an id that can be fetched from the database
+     */
     private Employee createEmployee(String firstName, List<String> directReports) {
         Employee employee = new Employee();
-        employee.setFirstName(firstName != null ? firstName : "John");
+        employee.setFirstName(ObjectUtils.defaultIfNull(firstName, "John"));
         employee.setLastName("Doe");
         employee.setDepartment("Engineering");
         employee.setPosition("Developer");
-        List<Employee> directReportEmployees = directReports.stream().map(employeeId -> {
-            Employee directReport = new Employee();
-            directReport.setEmployeeId(employeeId);
-            return directReport;
-        }).collect(Collectors.toList());
-        employee.setDirectReports(directReportEmployees);
+        if (directReports != null && !directReports.isEmpty()) {
+            List<Employee> directReportEmployees = directReports.stream().map(employeeId -> {
+                Employee directReport = new Employee();
+                directReport.setEmployeeId(employeeId);
+                return directReport;
+            }).collect(Collectors.toList());
+            employee.setDirectReports(directReportEmployees);
+        }
 
 
-        return restTemplate.postForEntity(employeeUrl, employee, Employee.class).getBody();
+        return employeeService.create(employee);
     }
+
     private static void assertEmployeeEquivalence(Employee expected, Employee actual) {
         assertEquals(expected.getFirstName(), actual.getFirstName());
         assertEquals(expected.getLastName(), actual.getLastName());

@@ -3,12 +3,18 @@ package com.mindex.challenge.service.impl;
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
+import com.mindex.challenge.exceptions.EmployeeNotFoundException;
 import com.mindex.challenge.service.EmployeeService;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.UUID;
+
+import static java.util.Collections.emptyList;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -29,13 +35,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Employee read(String id) {
+    public Employee read(String id) throws EmployeeNotFoundException {
         LOG.debug("Finding employee with id [{}]", id);
 
         Employee employee = employeeRepository.findByEmployeeId(id);
 
         if (employee == null) {
-            throw new RuntimeException("Invalid employeeId: " + id);
+            throw new EmployeeNotFoundException("Invalid employeeId: " + id);
         }
 
         return employee;
@@ -49,7 +55,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public ReportingStructure getReportingStructure(String id) {
+    public ReportingStructure getReportingStructure(String id) throws EmployeeNotFoundException {
         LOG.debug("Finding reporting structure for employee with id [{}]", id);
 
         Employee employee = read(id);
@@ -64,9 +70,10 @@ public class EmployeeServiceImpl implements EmployeeService {
      * @param employee the Employee to get the number of reports for
      * @return the total number of reports for the employee
      */
-    private int getNumberOfReports(Employee employee) {
-        int numberOfReports = employee.getDirectReports().size();
-        for (Employee directReport : employee.getDirectReports()) {
+    private int getNumberOfReports(Employee employee) throws EmployeeNotFoundException {
+        List<Employee> directReports = ObjectUtils.defaultIfNull(employee.getDirectReports(), emptyList());
+        int numberOfReports = directReports.size();
+        for (Employee directReport : directReports) {
             numberOfReports += getNumberOfReports(read(directReport.getEmployeeId()));
         }
 
