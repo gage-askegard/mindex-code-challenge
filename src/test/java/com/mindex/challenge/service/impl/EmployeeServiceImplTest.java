@@ -1,6 +1,7 @@
 package com.mindex.challenge.service.impl;
 
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.data.ReportingStructure;
 import com.mindex.challenge.service.EmployeeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +16,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -24,6 +31,7 @@ public class EmployeeServiceImplTest {
 
     private String employeeUrl;
     private String employeeIdUrl;
+    private String reportingStructureUrl;
 
     @Autowired
     private EmployeeService employeeService;
@@ -37,7 +45,8 @@ public class EmployeeServiceImplTest {
     @Before
     public void setup() {
         employeeUrl = "http://localhost:" + port + "/employee";
-        employeeIdUrl = "http://localhost:" + port + "/employee/{id}";
+        employeeIdUrl = employeeUrl + "/{id}";
+        reportingStructureUrl = employeeIdUrl + "/reportingStructure";
     }
 
     @Test
@@ -70,17 +79,95 @@ public class EmployeeServiceImplTest {
         Employee updatedEmployee =
                 restTemplate.exchange(employeeIdUrl,
                         HttpMethod.PUT,
-                        new HttpEntity<Employee>(readEmployee, headers),
+                        new HttpEntity<>(readEmployee, headers),
                         Employee.class,
                         readEmployee.getEmployeeId()).getBody();
 
         assertEmployeeEquivalence(readEmployee, updatedEmployee);
     }
 
+    @Test
+    public void testGetReportingStructureZeroReports() {
+        Employee createdEmployee = createEmployee(null, emptyList());
+        ReportingStructure expectedReportingStructure = new ReportingStructure(createdEmployee, 0);
+
+        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, createdEmployee.getEmployeeId()).getBody();
+
+        assertNotNull(actualReportingStructure);
+        assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
+    }
+
+    @Test
+    public void testGetReportingStructureDirectOnly() {
+        Employee directReport1 = createEmployee("Direct Report 1", emptyList());
+        Employee directReport2 = createEmployee("Direct Report 2", emptyList());
+        Employee directReport3 = createEmployee("Direct Report 3", emptyList());
+        Employee employeeToTest = createEmployee("Supervisor", Arrays.asList(directReport1.getEmployeeId(),
+                directReport2.getEmployeeId(), directReport3.getEmployeeId()));
+
+        ReportingStructure expectedReportingStructure = new ReportingStructure(employeeToTest, 3);
+
+        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employeeToTest.getEmployeeId()).getBody();
+
+        assertNotNull(actualReportingStructure);
+        assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
+    }
+
+    @Test
+    public void testGetReportingStructureMultipleLayers() {
+        Employee level3Employee1 = createEmployee("Level 3 Employee 1", emptyList());
+        Employee level2Employee1 = createEmployee("Level 2 Employee 1", Collections.singletonList(level3Employee1.getEmployeeId()));
+        Employee level3Employee2 = createEmployee("Level 3 Employee 2", emptyList());
+        Employee level4Employee1 = createEmployee("Level 4 Employee 1", emptyList());
+        Employee level3Employee3 = createEmployee("Level 3 Employee 3", Collections.singletonList(level4Employee1.getEmployeeId()));
+        Employee level3Employee4 = createEmployee("Level 3 Employee 4", emptyList());
+        Employee level2Employee2 = createEmployee("Level 2 Employee 2", Arrays.asList(
+                level3Employee2.getEmployeeId(),
+                level3Employee3.getEmployeeId(),
+                level3Employee4.getEmployeeId()
+        ));
+        Employee level2Employee3 = createEmployee("Level 2 Employee 3", emptyList());
+        Employee level1Employee = createEmployee("VP", Arrays.asList(level2Employee1.getEmployeeId(),
+                level2Employee2.getEmployeeId(), level2Employee3.getEmployeeId()));
+        Employee unrelatedEmployee = createEmployee("Unrelated Employee", emptyList());
+        createEmployee("Unrelated Manager", Collections.singletonList(unrelatedEmployee.getEmployeeId()));
+
+        ReportingStructure expectedReportingStructure = new ReportingStructure(level1Employee, 8);
+
+        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, level1Employee.getEmployeeId()).getBody();
+
+        assertNotNull(actualReportingStructure);
+        assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
+    }
+
+
+
+    private Employee createEmployee(String firstName, List<String> directReports) {
+        Employee employee = new Employee();
+        employee.setFirstName(firstName != null ? firstName : "John");
+        employee.setLastName("Doe");
+        employee.setDepartment("Engineering");
+        employee.setPosition("Developer");
+        List<Employee> directReportEmployees = directReports.stream().map(employeeId -> {
+            Employee directReport = new Employee();
+            directReport.setEmployeeId(employeeId);
+            return directReport;
+        }).collect(Collectors.toList());
+        employee.setDirectReports(directReportEmployees);
+
+
+        return restTemplate.postForEntity(employeeUrl, employee, Employee.class).getBody();
+    }
     private static void assertEmployeeEquivalence(Employee expected, Employee actual) {
         assertEquals(expected.getFirstName(), actual.getFirstName());
         assertEquals(expected.getLastName(), actual.getLastName());
         assertEquals(expected.getDepartment(), actual.getDepartment());
         assertEquals(expected.getPosition(), actual.getPosition());
     }
+
+    private static void assertReportingStructureEquivalence(ReportingStructure expected, ReportingStructure actual) {
+        assertEmployeeEquivalence(expected.getEmployee(), actual.getEmployee());
+        assertEquals(expected.getNumberOfReports(), actual.getNumberOfReports());
+    }
+
 }

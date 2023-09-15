@@ -2,6 +2,7 @@ package com.mindex.challenge.service.impl;
 
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.data.ReportingStructure;
 import com.mindex.challenge.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee read(String id) {
-        LOG.debug("Creating employee with id [{}]", id);
+        LOG.debug("Finding employee with id [{}]", id);
 
         Employee employee = employeeRepository.findByEmployeeId(id);
 
@@ -45,5 +46,30 @@ public class EmployeeServiceImpl implements EmployeeService {
         LOG.debug("Updating employee [{}]", employee);
 
         return employeeRepository.save(employee);
+    }
+
+    @Override
+    public ReportingStructure getReportingStructure(String id) {
+        LOG.debug("Finding reporting structure for employee with id [{}]", id);
+
+        Employee employee = read(id);
+        int numberOfReports = getNumberOfReports(employee);
+
+        return new ReportingStructure(employee, numberOfReports);
+    }
+
+    /**
+     * Recursively gets the number of reports for the given Employee by getting their direct reports and all the
+     * report's reports
+     * @param employee the Employee to get the number of reports for
+     * @return the total number of reports for the employee
+     */
+    private int getNumberOfReports(Employee employee) {
+        int numberOfReports = employee.getDirectReports().size();
+        for (Employee directReport : employee.getDirectReports()) {
+            numberOfReports += getNumberOfReports(read(directReport.getEmployeeId()));
+        }
+
+        return numberOfReports;
     }
 }
