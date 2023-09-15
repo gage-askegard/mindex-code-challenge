@@ -48,7 +48,7 @@ The Employee has a JSON schema of:
     },
     "directReports": {
       "type": "array",
-      "items" : "string"
+      "items" : "Employee"
     }
   }
 }
