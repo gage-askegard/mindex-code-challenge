@@ -3,7 +3,7 @@ package com.mindex.challenge.service.impl;
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
-import com.mindex.challenge.exceptions.EmployeeNotFoundException;
+import com.mindex.challenge.exceptions.NotFoundException;
 import com.mindex.challenge.service.EmployeeService;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
@@ -35,13 +35,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Employee read(String id) throws EmployeeNotFoundException {
+    public Employee read(String id) throws NotFoundException {
         LOG.debug("Finding employee with id [{}]", id);
 
         Employee employee = employeeRepository.findByEmployeeId(id);
 
         if (employee == null) {
-            throw new EmployeeNotFoundException("Invalid employeeId: " + id);
+            throw new NotFoundException("Invalid employeeId: " + id);
         }
 
         return employee;
@@ -55,7 +55,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public ReportingStructure getReportingStructure(String id) throws EmployeeNotFoundException {
+    public ReportingStructure getReportingStructure(String id) throws NotFoundException {
         LOG.debug("Finding reporting structure for employee with id [{}]", id);
 
         Employee employee = read(id);
@@ -70,7 +70,7 @@ public class EmployeeServiceImpl implements EmployeeService {
      * @param employee the Employee to get the number of reports for
      * @return the total number of reports for the employee
      */
-    private int getNumberOfReports(Employee employee) throws EmployeeNotFoundException {
+    private int getNumberOfReports(Employee employee) throws NotFoundException {
         List<Employee> directReports = ObjectUtils.defaultIfNull(employee.getDirectReports(), emptyList());
         int numberOfReports = directReports.size();
         for (Employee directReport : directReports) {

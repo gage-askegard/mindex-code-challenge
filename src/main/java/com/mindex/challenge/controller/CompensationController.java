@@ -1,7 +1,7 @@
 package com.mindex.challenge.controller;
 
 import com.mindex.challenge.data.Compensation;
-import com.mindex.challenge.exceptions.EmployeeNotFoundException;
+import com.mindex.challenge.exceptions.NotFoundException;
 import com.mindex.challenge.service.CompensationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class CompensationController {
     }
 
     @GetMapping("/employee/{employeeId}/compensation")
-    public Compensation findByEmployeeId(@PathVariable String employeeId) throws EmployeeNotFoundException {
+    public Compensation findByEmployeeId(@PathVariable String employeeId) throws NotFoundException {
         LOG.debug("Received find compensation by employee id request for employeeId [{}]", employeeId);
 
         return compensationService.findByEmployeeId(employeeId);

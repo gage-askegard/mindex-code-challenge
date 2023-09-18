@@ -3,7 +3,7 @@ package com.mindex.challenge.service.impl;
 import com.mindex.challenge.dao.CompensationRepository;
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.data.Employee;
-import com.mindex.challenge.exceptions.EmployeeNotFoundException;
+import com.mindex.challenge.exceptions.NotFoundException;
 import com.mindex.challenge.service.CompensationService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -90,9 +90,9 @@ public class CompensationServiceImplTest {
     }
 
     @Test
-    public void testFindByEmployeeIdNotFound() throws EmployeeNotFoundException {
+    public void testFindByEmployeeIdNotFound() throws NotFoundException {
         String employeeId = UUID.randomUUID().toString();
-        exceptionRule.expect(EmployeeNotFoundException.class);
+        exceptionRule.expect(NotFoundException.class);
         exceptionRule.expectMessage("Compensation not found for employee: " + employeeId);
 
         compensationService.findByEmployeeId(employeeId);

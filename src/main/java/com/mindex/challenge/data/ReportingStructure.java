@@ -1,5 +1,8 @@
 package com.mindex.challenge.data;
 
+/**
+ * Model to represent an employee and how many heads report to them
+ */
 public class ReportingStructure {
 
     private Employee employee;

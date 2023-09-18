@@ -2,6 +2,9 @@ package com.mindex.challenge.data;
 
 import java.util.List;
 
+/**
+ * A representation of an employee in this application
+ */
 public class Employee {
     private String employeeId;
     private String firstName;

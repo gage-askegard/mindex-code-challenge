@@ -2,7 +2,7 @@ package com.mindex.challenge.service.impl;
 
 import com.mindex.challenge.dao.CompensationRepository;
 import com.mindex.challenge.data.Compensation;
-import com.mindex.challenge.exceptions.EmployeeNotFoundException;
+import com.mindex.challenge.exceptions.NotFoundException;
 import com.mindex.challenge.service.CompensationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +26,14 @@ public class CompensationServiceImpl implements CompensationService {
     }
 
     @Override
-    public Compensation findByEmployeeId(String employeeId) throws EmployeeNotFoundException {
+    public Compensation findByEmployeeId(String employeeId) throws NotFoundException {
         LOG.debug("Finding compensation by employee ID [{}]", employeeId);
 
-        Compensation compensation = compensationRepository.findFirstByEmployee_EmployeeIdOrderByEffectiveDateDesc(employeeId);
+        Compensation compensation = compensationRepository
+                .findFirstByEmployee_EmployeeIdOrderByEffectiveDateDesc(employeeId);
 
         if (compensation == null) {
-            throw new EmployeeNotFoundException("Compensation not found for employee: " + employeeId);
+            throw new NotFoundException("Compensation not found for employee: " + employeeId);
         }
 
         return compensation;
