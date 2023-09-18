@@ -2,7 +2,7 @@ package com.mindex.challenge.controller;
 
 import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
-import com.mindex.challenge.exceptions.EmployeeNotFoundException;
+import com.mindex.challenge.exceptions.NotFoundException;
 import com.mindex.challenge.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/employee/{id}")
-    public Employee read(@PathVariable String id) throws EmployeeNotFoundException {
+    public Employee read(@PathVariable String id) throws NotFoundException {
         LOG.debug("Received employee read request for id [{}]", id);
 
         return employeeService.read(id);
@@ -39,7 +39,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/employee/{id}/reportingStructure")
-    public ReportingStructure getReportingStructure(@PathVariable String id) throws EmployeeNotFoundException {
+    public ReportingStructure getReportingStructure(@PathVariable String id) throws NotFoundException {
         LOG.debug("Received employee reporting structure request for id [{}]", id);
 
         return employeeService.getReportingStructure(id);

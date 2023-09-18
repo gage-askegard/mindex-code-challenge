@@ -3,7 +3,7 @@ package com.mindex.challenge.service.impl;
 import com.mindex.challenge.dao.CompensationRepository;
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.data.Employee;
-import com.mindex.challenge.exceptions.EmployeeNotFoundException;
+import com.mindex.challenge.exceptions.NotFoundException;
 import com.mindex.challenge.service.CompensationService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static com.mindex.challenge.service.impl.EmployeeServiceImplTest.assertEmployeeEquivalence;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -48,7 +47,7 @@ public class CompensationServiceImplTest {
     @Before
     public void setup() {
         createUrl = "http://localhost:" + port + "/compensation";
-        findByEmployeeIdUrl = "http://localhost:" + port +"/employee/{employeeId}/compensation";
+        findByEmployeeIdUrl = "http://localhost:" + port + "/employee/{employeeId}/compensation";
     }
 
     @Test
@@ -61,16 +60,19 @@ public class CompensationServiceImplTest {
         compensation.setEffectiveDate(LocalDate.parse("2023-01-01"));
 
         // Create checks
-        Compensation createdCompensation = restTemplate.postForEntity(createUrl, compensation, Compensation.class).getBody();
+        Compensation createdCompensation = restTemplate.postForEntity(createUrl, compensation, Compensation.class)
+                .getBody();
 
         assertNotNull(createdCompensation);
-        assertCompensationEquivalence(compensation, createdCompensation);
+        assertEquals(compensation, createdCompensation);
 
 
         // Find by employeeId checks
-        Compensation foundCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employee.getEmployeeId()).getBody();
+        Compensation foundCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class,
+                        employee.getEmployeeId())
+                .getBody();
         assertNotNull(foundCompensation);
-        assertCompensationEquivalence(createdCompensation, foundCompensation);
+        assertEquals(createdCompensation, foundCompensation);
     }
 
     @Test
@@ -79,29 +81,25 @@ public class CompensationServiceImplTest {
         // Oldest
         insertCompensation(employeeId, new BigDecimal("100000"), LocalDate.parse("2021-01-01"));
         // Newest
-        Compensation expectedCompensation = insertCompensation(employeeId, new BigDecimal("115000"), LocalDate.parse("2022-10-01"));
+        Compensation expectedCompensation = insertCompensation(employeeId, new BigDecimal("115000"),
+                LocalDate.parse("2022-10-01"));
         // In-between
         insertCompensation(employeeId, new BigDecimal("110000"), LocalDate.parse("2022-01-01"));
 
         // Ensure the most recent compensation is returned
-        Compensation latestCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employeeId).getBody();
+        Compensation latestCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employeeId)
+                .getBody();
         assertNotNull(latestCompensation);
-        assertCompensationEquivalence(latestCompensation, expectedCompensation);
+        assertEquals(latestCompensation, expectedCompensation);
     }
 
     @Test
-    public void testFindByEmployeeIdNotFound() throws EmployeeNotFoundException {
+    public void testFindByEmployeeIdNotFound() throws NotFoundException {
         String employeeId = UUID.randomUUID().toString();
-        exceptionRule.expect(EmployeeNotFoundException.class);
+        exceptionRule.expect(NotFoundException.class);
         exceptionRule.expectMessage("Compensation not found for employee: " + employeeId);
 
         compensationService.findByEmployeeId(employeeId);
-    }
-
-    private static void assertCompensationEquivalence(Compensation expected, Compensation actual) {
-        assertEmployeeEquivalence(expected.getEmployee(), actual.getEmployee());
-        assertEquals(expected.getSalary(), actual.getSalary());
-        assertEquals(expected.getEffectiveDate(), actual.getEffectiveDate());
     }
 
     private Compensation insertCompensation(String employeeId, BigDecimal salary, LocalDate effectiveDate) {
