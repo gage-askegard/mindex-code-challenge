@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static com.mindex.challenge.service.impl.EmployeeServiceImplTest.assertEmployeeEquivalence;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -65,7 +64,7 @@ public class CompensationServiceImplTest {
                 .getBody();
 
         assertNotNull(createdCompensation);
-        assertCompensationEquivalence(compensation, createdCompensation);
+        assertEquals(compensation, createdCompensation);
 
 
         // Find by employeeId checks
@@ -73,7 +72,7 @@ public class CompensationServiceImplTest {
                         employee.getEmployeeId())
                 .getBody();
         assertNotNull(foundCompensation);
-        assertCompensationEquivalence(createdCompensation, foundCompensation);
+        assertEquals(createdCompensation, foundCompensation);
     }
 
     @Test
@@ -91,7 +90,7 @@ public class CompensationServiceImplTest {
         Compensation latestCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employeeId)
                 .getBody();
         assertNotNull(latestCompensation);
-        assertCompensationEquivalence(latestCompensation, expectedCompensation);
+        assertEquals(latestCompensation, expectedCompensation);
     }
 
     @Test
@@ -101,12 +100,6 @@ public class CompensationServiceImplTest {
         exceptionRule.expectMessage("Compensation not found for employee: " + employeeId);
 
         compensationService.findByEmployeeId(employeeId);
-    }
-
-    private static void assertCompensationEquivalence(Compensation expected, Compensation actual) {
-        assertEmployeeEquivalence(expected.getEmployee(), actual.getEmployee());
-        assertEquals(expected.getSalary(), actual.getSalary());
-        assertEquals(expected.getEffectiveDate(), actual.getEffectiveDate());
     }
 
     private Compensation insertCompensation(String employeeId, BigDecimal salary, LocalDate effectiveDate) {

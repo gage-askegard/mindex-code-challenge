@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
@@ -73,7 +72,7 @@ public class EmployeeServiceImplTest {
                 .getBody();
 
         assertNotNull(createdEmployee.getEmployeeId());
-        assertEmployeeEquivalence(testEmployee, createdEmployee);
+        assertEquals(testEmployee, createdEmployee);
 
 
         // Read checks
@@ -81,7 +80,7 @@ public class EmployeeServiceImplTest {
                         createdEmployee.getEmployeeId())
                 .getBody();
         assertEquals(createdEmployee.getEmployeeId(), readEmployee.getEmployeeId());
-        assertEmployeeEquivalence(createdEmployee, readEmployee);
+        assertEquals(createdEmployee, readEmployee);
 
 
         // Update checks
@@ -98,7 +97,7 @@ public class EmployeeServiceImplTest {
                                 readEmployee.getEmployeeId())
                         .getBody();
 
-        assertEmployeeEquivalence(readEmployee, updatedEmployee);
+        assertEquals(readEmployee, updatedEmployee);
     }
 
     @Test
@@ -111,7 +110,7 @@ public class EmployeeServiceImplTest {
                 .getBody();
 
         assertNotNull(actualReportingStructure);
-        assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
+        assertEquals(expectedReportingStructure, actualReportingStructure);
     }
 
     @Test
@@ -119,8 +118,8 @@ public class EmployeeServiceImplTest {
         Employee directReport1 = createEmployee("Direct Report 1", emptyList());
         Employee directReport2 = createEmployee("Direct Report 2", emptyList());
         Employee directReport3 = createEmployee("Direct Report 3", emptyList());
-        Employee employeeToTest = createEmployee("Supervisor", Arrays.asList(directReport1.getEmployeeId(),
-                directReport2.getEmployeeId(), directReport3.getEmployeeId()));
+        Employee employeeToTest = createEmployee("Supervisor", Arrays.asList(directReport1,
+                directReport2, directReport3));
 
         ReportingStructure expectedReportingStructure = new ReportingStructure(employeeToTest, 3);
 
@@ -129,29 +128,30 @@ public class EmployeeServiceImplTest {
                 .getBody();
 
         assertNotNull(actualReportingStructure);
-        assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
+        assertEquals(expectedReportingStructure, actualReportingStructure);
     }
 
     @Test
     public void testGetReportingStructureMultipleLayers() {
         Employee level3Employee1 = createEmployee("Level 3 Employee 1", emptyList());
         Employee level2Employee1 = createEmployee("Level 2 Employee 1",
-                Collections.singletonList(level3Employee1.getEmployeeId()));
+                Collections.singletonList(level3Employee1));
         Employee level3Employee2 = createEmployee("Level 3 Employee 2", emptyList());
         Employee level4Employee1 = createEmployee("Level 4 Employee 1", emptyList());
         Employee level3Employee3 = createEmployee("Level 3 Employee 3",
-                Collections.singletonList(level4Employee1.getEmployeeId()));
+                Collections.singletonList(level4Employee1));
         Employee level3Employee4 = createEmployee("Level 3 Employee 4", emptyList());
         Employee level2Employee2 = createEmployee("Level 2 Employee 2", Arrays.asList(
-                level3Employee2.getEmployeeId(),
-                level3Employee3.getEmployeeId(),
-                level3Employee4.getEmployeeId()
+                level3Employee2,
+                level3Employee3,
+                level3Employee4
         ));
         Employee level2Employee3 = createEmployee("Level 2 Employee 3", emptyList());
-        Employee level1Employee = createEmployee("VP", Arrays.asList(level2Employee1.getEmployeeId(),
-                level2Employee2.getEmployeeId(), level2Employee3.getEmployeeId()));
+        Employee level1Employee = createEmployee("VP", Arrays.asList(level2Employee1,
+                level2Employee2, level2Employee3));
         Employee unrelatedEmployee = createEmployee("Unrelated Employee", emptyList());
-        createEmployee("Unrelated Manager", Collections.singletonList(unrelatedEmployee.getEmployeeId()));
+        createEmployee("Unrelated Manager", Collections.singletonList(unrelatedEmployee));
+
 
         ReportingStructure expectedReportingStructure = new ReportingStructure(level1Employee, 8);
 
@@ -160,7 +160,8 @@ public class EmployeeServiceImplTest {
                 .getBody();
 
         assertNotNull(actualReportingStructure);
-        assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
+        assertEquals(expectedReportingStructure, actualReportingStructure);
+
     }
 
     @Test
@@ -174,9 +175,11 @@ public class EmployeeServiceImplTest {
 
     @Test
     public void testGetReportingStructureDirectReportNotFound() throws NotFoundException {
-        String invalidDirectReport = UUID.randomUUID().toString();
+        String invalidDirectReportId = UUID.randomUUID().toString();
+        Employee invalidDirectReport = new Employee();
+        invalidDirectReport.setEmployeeId(invalidDirectReportId);
         exceptionRule.expect(NotFoundException.class);
-        exceptionRule.expectMessage("Invalid employeeId: " + invalidDirectReport);
+        exceptionRule.expectMessage("Invalid employeeId: " + invalidDirectReportId);
         Employee employee = createEmployee(UUID.randomUUID().toString(), Collections.singletonList(invalidDirectReport));
 
         employeeService.getReportingStructure(employee.getEmployeeId());
@@ -189,38 +192,16 @@ public class EmployeeServiceImplTest {
      * @param directReports ids of the employee's direct reports
      * @return an Employee with an id that can be fetched from the database
      */
-    private Employee createEmployee(String employeeId, List<String> directReports) {
+    private Employee createEmployee(String employeeId, List<Employee> directReports) {
         Employee employee = new Employee();
         employee.setEmployeeId(employeeId);
         employee.setFirstName("John");
         employee.setLastName("Doe");
         employee.setDepartment("Engineering");
         employee.setPosition("Developer");
-        if (directReports != null && !directReports.isEmpty()) {
-            List<Employee> directReportEmployees = directReports.stream()
-                    .map(reportEmployeeId -> {
-                        Employee directReport = new Employee();
-                        directReport.setEmployeeId(reportEmployeeId);
-                        return directReport;
-                    })
-                    .collect(Collectors.toList());
-            employee.setDirectReports(directReportEmployees);
-        }
+        employee.setDirectReports(directReports);
 
 
         return employeeRepository.insert(employee);
     }
-
-    static void assertEmployeeEquivalence(Employee expected, Employee actual) {
-        assertEquals(expected.getFirstName(), actual.getFirstName());
-        assertEquals(expected.getLastName(), actual.getLastName());
-        assertEquals(expected.getDepartment(), actual.getDepartment());
-        assertEquals(expected.getPosition(), actual.getPosition());
-    }
-
-    private static void assertReportingStructureEquivalence(ReportingStructure expected, ReportingStructure actual) {
-        assertEmployeeEquivalence(expected.getEmployee(), actual.getEmployee());
-        assertEquals(expected.getNumberOfReports(), actual.getNumberOfReports());
-    }
-
 }
