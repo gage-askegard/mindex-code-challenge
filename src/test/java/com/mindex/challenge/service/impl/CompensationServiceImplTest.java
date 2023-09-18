@@ -3,6 +3,7 @@ package com.mindex.challenge.service.impl;
 import com.mindex.challenge.dao.CompensationRepository;
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.exceptions.EmployeeNotFoundException;
 import com.mindex.challenge.service.CompensationService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -86,6 +87,15 @@ public class CompensationServiceImplTest {
         Compensation latestCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employeeId).getBody();
         assertNotNull(latestCompensation);
         assertCompensationEquivalence(latestCompensation, expectedCompensation);
+    }
+
+    @Test
+    public void testFindByEmployeeIdNotFound() throws EmployeeNotFoundException {
+        String employeeId = UUID.randomUUID().toString();
+        exceptionRule.expect(EmployeeNotFoundException.class);
+        exceptionRule.expectMessage("Compensation not found for employee: " + employeeId);
+
+        compensationService.findByEmployeeId(employeeId);
     }
 
     private static void assertCompensationEquivalence(Compensation expected, Compensation actual) {
