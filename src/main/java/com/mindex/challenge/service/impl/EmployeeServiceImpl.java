@@ -67,6 +67,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     /**
      * Recursively gets the number of reports for the given Employee by getting their direct reports and all the
      * report's reports
+     *
      * @param employee the Employee to get the number of reports for
      * @return the total number of reports for the employee
      */

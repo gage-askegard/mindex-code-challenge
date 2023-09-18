@@ -28,8 +28,10 @@ public class DataBootstrap {
 
     @PostConstruct
     public void init() {
-        InputStream employeeStream = this.getClass().getResourceAsStream(EMPLOYEE_DATA_LOCATION);
-        InputStream compensationStream = this.getClass().getResourceAsStream(COMPENSATION_DATA_LOCATION);
+        InputStream employeeStream = this.getClass()
+                .getResourceAsStream(EMPLOYEE_DATA_LOCATION);
+        InputStream compensationStream = this.getClass()
+                .getResourceAsStream(COMPENSATION_DATA_LOCATION);
 
         Employee[] employees;
         Compensation[] compensations;

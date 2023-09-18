@@ -48,7 +48,7 @@ public class CompensationServiceImplTest {
     @Before
     public void setup() {
         createUrl = "http://localhost:" + port + "/compensation";
-        findByEmployeeIdUrl = "http://localhost:" + port +"/employee/{employeeId}/compensation";
+        findByEmployeeIdUrl = "http://localhost:" + port + "/employee/{employeeId}/compensation";
     }
 
     @Test
@@ -61,14 +61,17 @@ public class CompensationServiceImplTest {
         compensation.setEffectiveDate(LocalDate.parse("2023-01-01"));
 
         // Create checks
-        Compensation createdCompensation = restTemplate.postForEntity(createUrl, compensation, Compensation.class).getBody();
+        Compensation createdCompensation = restTemplate.postForEntity(createUrl, compensation, Compensation.class)
+                .getBody();
 
         assertNotNull(createdCompensation);
         assertCompensationEquivalence(compensation, createdCompensation);
 
 
         // Find by employeeId checks
-        Compensation foundCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employee.getEmployeeId()).getBody();
+        Compensation foundCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class,
+                        employee.getEmployeeId())
+                .getBody();
         assertNotNull(foundCompensation);
         assertCompensationEquivalence(createdCompensation, foundCompensation);
     }
@@ -79,12 +82,14 @@ public class CompensationServiceImplTest {
         // Oldest
         insertCompensation(employeeId, new BigDecimal("100000"), LocalDate.parse("2021-01-01"));
         // Newest
-        Compensation expectedCompensation = insertCompensation(employeeId, new BigDecimal("115000"), LocalDate.parse("2022-10-01"));
+        Compensation expectedCompensation = insertCompensation(employeeId, new BigDecimal("115000"),
+                LocalDate.parse("2022-10-01"));
         // In-between
         insertCompensation(employeeId, new BigDecimal("110000"), LocalDate.parse("2022-01-01"));
 
         // Ensure the most recent compensation is returned
-        Compensation latestCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employeeId).getBody();
+        Compensation latestCompensation = restTemplate.getForEntity(findByEmployeeIdUrl, Compensation.class, employeeId)
+                .getBody();
         assertNotNull(latestCompensation);
         assertCompensationEquivalence(latestCompensation, expectedCompensation);
     }

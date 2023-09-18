@@ -13,7 +13,7 @@ public class Compensation {
 
     private BigDecimal salary;
 
-    @JsonFormat(pattern="yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate effectiveDate;
 
     public Employee getEmployee() {

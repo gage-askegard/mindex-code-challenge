@@ -69,14 +69,17 @@ public class EmployeeServiceImplTest {
         testEmployee.setPosition("Developer");
 
         // Create checks
-        Employee createdEmployee = restTemplate.postForEntity(employeeUrl, testEmployee, Employee.class).getBody();
+        Employee createdEmployee = restTemplate.postForEntity(employeeUrl, testEmployee, Employee.class)
+                .getBody();
 
         assertNotNull(createdEmployee.getEmployeeId());
         assertEmployeeEquivalence(testEmployee, createdEmployee);
 
 
         // Read checks
-        Employee readEmployee = restTemplate.getForEntity(employeeIdUrl, Employee.class, createdEmployee.getEmployeeId()).getBody();
+        Employee readEmployee = restTemplate.getForEntity(employeeIdUrl, Employee.class,
+                        createdEmployee.getEmployeeId())
+                .getBody();
         assertEquals(createdEmployee.getEmployeeId(), readEmployee.getEmployeeId());
         assertEmployeeEquivalence(createdEmployee, readEmployee);
 
@@ -89,10 +92,11 @@ public class EmployeeServiceImplTest {
 
         Employee updatedEmployee =
                 restTemplate.exchange(employeeIdUrl,
-                        HttpMethod.PUT,
-                        new HttpEntity<>(readEmployee, headers),
-                        Employee.class,
-                        readEmployee.getEmployeeId()).getBody();
+                                HttpMethod.PUT,
+                                new HttpEntity<>(readEmployee, headers),
+                                Employee.class,
+                                readEmployee.getEmployeeId())
+                        .getBody();
 
         assertEmployeeEquivalence(readEmployee, updatedEmployee);
     }
@@ -102,7 +106,9 @@ public class EmployeeServiceImplTest {
         Employee createdEmployee = createEmployee(UUID.randomUUID().toString(), null);
         ReportingStructure expectedReportingStructure = new ReportingStructure(createdEmployee, 0);
 
-        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, createdEmployee.getEmployeeId()).getBody();
+        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl,
+                        ReportingStructure.class, createdEmployee.getEmployeeId())
+                .getBody();
 
         assertNotNull(actualReportingStructure);
         assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
@@ -118,7 +124,9 @@ public class EmployeeServiceImplTest {
 
         ReportingStructure expectedReportingStructure = new ReportingStructure(employeeToTest, 3);
 
-        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employeeToTest.getEmployeeId()).getBody();
+        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl,
+                        ReportingStructure.class, employeeToTest.getEmployeeId())
+                .getBody();
 
         assertNotNull(actualReportingStructure);
         assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
@@ -127,10 +135,12 @@ public class EmployeeServiceImplTest {
     @Test
     public void testGetReportingStructureMultipleLayers() {
         Employee level3Employee1 = createEmployee("Level 3 Employee 1", emptyList());
-        Employee level2Employee1 = createEmployee("Level 2 Employee 1", Collections.singletonList(level3Employee1.getEmployeeId()));
+        Employee level2Employee1 = createEmployee("Level 2 Employee 1",
+                Collections.singletonList(level3Employee1.getEmployeeId()));
         Employee level3Employee2 = createEmployee("Level 3 Employee 2", emptyList());
         Employee level4Employee1 = createEmployee("Level 4 Employee 1", emptyList());
-        Employee level3Employee3 = createEmployee("Level 3 Employee 3", Collections.singletonList(level4Employee1.getEmployeeId()));
+        Employee level3Employee3 = createEmployee("Level 3 Employee 3",
+                Collections.singletonList(level4Employee1.getEmployeeId()));
         Employee level3Employee4 = createEmployee("Level 3 Employee 4", emptyList());
         Employee level2Employee2 = createEmployee("Level 2 Employee 2", Arrays.asList(
                 level3Employee2.getEmployeeId(),
@@ -145,7 +155,9 @@ public class EmployeeServiceImplTest {
 
         ReportingStructure expectedReportingStructure = new ReportingStructure(level1Employee, 8);
 
-        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, level1Employee.getEmployeeId()).getBody();
+        ReportingStructure actualReportingStructure = restTemplate.getForEntity(reportingStructureUrl,
+                        ReportingStructure.class, level1Employee.getEmployeeId())
+                .getBody();
 
         assertNotNull(actualReportingStructure);
         assertReportingStructureEquivalence(expectedReportingStructure, actualReportingStructure);
@@ -172,7 +184,8 @@ public class EmployeeServiceImplTest {
 
     /**
      * Generates and saves an employee to the database
-     * @param employeeId employee id, helpful for debugging when creating multiple employees
+     *
+     * @param employeeId    employee id, helpful for debugging when creating multiple employees
      * @param directReports ids of the employee's direct reports
      * @return an Employee with an id that can be fetched from the database
      */
@@ -184,11 +197,13 @@ public class EmployeeServiceImplTest {
         employee.setDepartment("Engineering");
         employee.setPosition("Developer");
         if (directReports != null && !directReports.isEmpty()) {
-            List<Employee> directReportEmployees = directReports.stream().map(reportEmployeeId -> {
-                Employee directReport = new Employee();
-                directReport.setEmployeeId(reportEmployeeId);
-                return directReport;
-            }).collect(Collectors.toList());
+            List<Employee> directReportEmployees = directReports.stream()
+                    .map(reportEmployeeId -> {
+                        Employee directReport = new Employee();
+                        directReport.setEmployeeId(reportEmployeeId);
+                        return directReport;
+                    })
+                    .collect(Collectors.toList());
             employee.setDirectReports(directReportEmployees);
         }
 

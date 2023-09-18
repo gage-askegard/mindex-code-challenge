@@ -41,9 +41,11 @@ public class DataBootstrapTest {
 
     @Test
     public void testCompensation() {
-        Compensation compensation = compensationRepository.findFirstByEmployee_EmployeeIdOrderByEffectiveDateDesc(LENNON_ID);
+        Compensation compensation = compensationRepository.findFirstByEmployee_EmployeeIdOrderByEffectiveDateDesc(
+                LENNON_ID);
         assertNotNull(compensation);
-        assertEquals(LENNON_ID, compensation.getEmployee().getEmployeeId());
+        assertEquals(LENNON_ID, compensation.getEmployee()
+                .getEmployeeId());
         assertEquals(new BigDecimal("200000"), compensation.getSalary());
         assertEquals(LocalDate.parse("2022-03-01"), compensation.getEffectiveDate());
     }
