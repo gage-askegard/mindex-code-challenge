@@ -59,23 +59,25 @@ public class EmployeeServiceImpl implements EmployeeService {
         LOG.debug("Finding reporting structure for employee with id [{}]", id);
 
         Employee employee = read(id);
-        int numberOfReports = getNumberOfReports(employee);
+        int numberOfReports = fillOutReportingStructure(employee);
 
         return new ReportingStructure(employee, numberOfReports);
     }
 
     /**
-     * Recursively gets the number of reports for the given Employee by getting their direct reports and all the
-     * report's reports
+     * Recursively fills out the reporting structure for the given Employee by getting their direct reports and all the
+     * report's reports, and returns the total number of reports for the Employee
      *
-     * @param employee the Employee to get the number of reports for
+     * @param employee the Employee to fill out the reporting structure for
      * @return the total number of reports for the employee
      */
-    private int getNumberOfReports(Employee employee) throws NotFoundException {
+    private int fillOutReportingStructure(Employee employee) throws NotFoundException {
         List<Employee> directReports = ObjectUtils.defaultIfNull(employee.getDirectReports(), emptyList());
         int numberOfReports = directReports.size();
         for (Employee directReport : directReports) {
-            numberOfReports += getNumberOfReports(read(directReport.getEmployeeId()));
+            Employee fetchedDirectReport = read(directReport.getEmployeeId());
+            directReport.setDirectReports(fetchedDirectReport.getDirectReports());
+            numberOfReports += fillOutReportingStructure(read(directReport.getEmployeeId()));
         }
 
         return numberOfReports;
